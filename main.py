@@ -14,8 +14,8 @@ def execute_get_request(request):
         'Content-Type': 'application/json'
     }
     file = requests.get(request, headers=headers, auth=('admin', 'admin'))
-    resp = json.loads(file.text)
-    return resp
+    if file.status_code in [200, 201]:
+        return json.loads(file.text)
 
 
 def list_node_children(parent_id):
@@ -26,7 +26,11 @@ def list_node_children(parent_id):
     """
     url = 'http://localhost:8080/alfresco/api/-default-/public/alfresco/versions/1/nodes/{}/children'.format(parent_id)
     resp = execute_get_request(url)
-    return [x['entry']['id'] for x in resp['list']['entries']]
+
+    if resp:
+        return [x['entry']['id'] for x in resp['list']['entries']]
+    else:
+        print('Error finding folder with ID: {}'.format(parent_id))
 
 
 def get_node_by_id(node_id):
@@ -38,11 +42,14 @@ def get_node_by_id(node_id):
     """
     url = 'http://localhost:8080/alfresco/api/-default-/public/alfresco/versions/1/nodes/{}'.format(node_id)
     resp = execute_get_request(url)['entry']
-    return {
-        'name': resp['name'],
-        'title': resp['properties']['cm:title'],
-        'description': resp['properties']['cm:description']
-    }
+    if resp:
+        return {
+            'name': resp['name'],
+            'title': resp['properties']['cm:title'],
+            'description': resp['properties']['cm:description']
+        }
+    else:
+        print('Error finding file with ID: {}'.format(node_id))
 
 
 def write_to_excel(metadata, path):
